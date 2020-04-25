@@ -15,26 +15,24 @@ let codes = {};
  * @apiParam {String} mail 邮箱.
  *
  * @apiSuccess {String} err null.
- * @apiSuccess {String} msg  ''.
+ * @apiSuccess {String} msg  '用户已存在'.
  */
 
-router.get("/GetRepeatUser", (req, res) => {
+router.get("/GetRepeatUserAPI", (req, res) => {
   // 获取数据
-  let { username, mail } = req.body;
+  let { username, mail } = req.query;
   if (username || mail) {
     User.find({ $or: [{ username }, { mail }] })
       .then((data) => {
         if (data.length > 0) {
-          res.send({ err: "error", msg: "用户已存在" });
-        } else {
-          res.send({ err: null, msg: "暂无相关数据" });
+          res.send({ err: null, msg: "用户已存在" });
         }
       })
       .catch((err) => {
         res.send({ err: "error", msg: err });
       });
   } else {
-    return res.send({ err: "error", msg: "请校验必填项" });
+      res.send({ err: "error", msg: '请校验必填项' });
   }
 });
 
@@ -50,6 +48,9 @@ router.get("/GetRepeatUser", (req, res) => {
  *
  * @apiSuccess {String} err null.
  * @apiSuccess {String} msg  注册成功.
+ * 
+ * @apiError {String} err error
+ * @apiError {String} msg 验证码错误/请校验必填项
  */
 
 router.post("/regist", (req, res) => {
@@ -93,11 +94,13 @@ router.post("/login", (req, res) => {
         data.length > 0
           ? User.find({ password }).then((data) => {
               if (data.length > 0) {
-                let token = jwt.createToken({ login: true, username });
-                let time = new Date().getTime()
-                User.updateOne({username}, {last_login_time: time}).then(() => {
-                  res.send({ err: null, msg: "登陆成功", token })
-                })
+                let token = jwt.createToken({ id: data[0]._id, img: data[0].img, last_login_time: data[0].last_login_time });
+                let time = new Date().getTime();
+                User.updateOne({ username }, { last_login_time: time }).then(
+                  () => {
+                    res.send({ err: null, msg: "登陆成功", token });
+                  }
+                );
               } else {
                 res.send({ err: "error", msg: "密码错误" });
               }
@@ -119,7 +122,8 @@ router.post("/login", (req, res) => {
  *
  * @apiParam {String} mail 邮箱.
  *
- * @apiSuccess {String} code 验证码.
+ * @apiSuccess {String} err null.
+ * @apiSuccess {String} msg 验证码发送成功(有效时间3分钟).
  */
 
 // 邮箱验证
@@ -169,8 +173,8 @@ router.post("/GetMailCodeAPI", (req, res) => {
  * @apiParam {String} selfIntroduction 个人介绍.
  * @apiParam {String} homepage 个人主页.
  *
- * @apiSuccess {String} firstname Firstname of the User.
- * @apiSuccess {String} lastname  Lastname of the User.
+ * @apiSuccess {String} err null.
+ * @apiSuccess {String} msg 修改成功.
  */
 
 router.put("/UpdateUserAPI", (req, res) => {
@@ -226,8 +230,8 @@ router.put("/UpdateUserAPI", (req, res) => {
  *
  * @apiParam {String} ids 要删除用户的id数组.
  *
- * @apiSuccess {String} firstname Firstname of the User.
- * @apiSuccess {String} lastname  Lastname of the User.
+ * @apiSuccess {String} err null.
+ * @apiSuccess {String} msg 删除成功.
  */
 
 router.put("/DeleteUserAPI", (req, res) => {
@@ -250,8 +254,8 @@ router.put("/DeleteUserAPI", (req, res) => {
  * @apiName 查看用户信息列表
  * @apiGroup User
  *
- * @apiSuccess {String} firstname Firstname of the User.
- * @apiSuccess {String} lastname  Lastname of the User.
+ * @apiSuccess {String} err null.
+ * @apiSuccess {String} data 用户对象.
  */
 
 router.get("/UserListAPI", (req, res) => {
@@ -260,7 +264,7 @@ router.get("/UserListAPI", (req, res) => {
       if (data.length > 0) {
         res.send({ err: null, data });
       } else {
-        res.send({ err: null, msg: '暂无相关数据' });
+        res.send({ err: null, msg: "暂无相关数据" });
       }
     })
     .catch((err) => {
@@ -270,21 +274,21 @@ router.get("/UserListAPI", (req, res) => {
 
 /**
  * @api {get} /UserInfoAPI 查看用户信息
- * @apiName 查看用户信息列表
+ * @apiName 查看用户信息
  * @apiGroup User
  *
- * @apiParams {String} uid 查看用户的id
+ * @apiParam {String} uid 查看用户的id
  *
- * @apiSuccess {String} firstname Firstname of the User.
- * @apiSuccess {String} lastname  Lastname of the User.
+ * @apiSuccess {String} err null.
+ * @apiSuccess {String} data 用户对象.
  */
 
 router.get("/UserInfoAPI", (req, res) => {
-  let { uid } = req.body;
+  let { uid } = req.query;
   if (uid) {
     User.find({ _id: uid })
       .then((data) => {
-        res.send({ err: null, data });
+        res.send({ err: null, data: data[0] });
       })
       .catch((err) => {
         res.send({ err: "error", msg: err });

@@ -12,8 +12,8 @@
     "mongoose": "^5.9.9",
     "nodemailer": "^6.4.6"
   },
-    "apidoc": {
-      "title": "IT-reader API文档",
-      "url": "https://api.github.com/v2"
-    }
+  "apidoc": {
+    "title": "IT-reader API文档",
+    "url": "http://localhost:3000"
+  }
 }

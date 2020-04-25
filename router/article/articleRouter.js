@@ -10,18 +10,18 @@ const Article = require("./model");
  * @apiParam {String} uid 发布者用户id.
  * @apiParam {String} title 文章标题.
  * @apiParam {String} content 文章内容.
- * @apiParam {String} type 文章分类(一级标签).
- * @apiParam {String} label 标签名(二级标签child).
+ * @apiParam {String} label 文章分类(一级标签).
+ * @apiParam {String} child 标签名(二级标签child).
  *
  * @apiSuccess {String} firstname Firstname of the User.
  * @apiSuccess {String} lastname  Lastname of the User.
  */
 
 router.post("/PublishArticleAPI", (req, res) => {
-  let { uid, title, content, type, label } = req.body;
-  if (uid && title && content && type && label) {
+  let { uid, title, content, label, child } = req.body;
+  if (uid && title && content && label && child) {
     let time = new Date().getTime();
-    Article.insertMany({ uid, title, content, type, label, publish_time: time })
+    Article.insertMany({ uid, title, content, label, child, publish_time: time })
       .then(() => {
         res.send({ err: null, msg: "发布成功" });
       })
@@ -41,20 +41,20 @@ router.post("/PublishArticleAPI", (req, res) => {
  * @apiParam {String} aid 文章id.
  * @apiParam {String} title 文章标题.
  * @apiParam {String} content 文章内容.
- * @apiParam {String} type 文章分类(一级标签).
- * @apiParam {String} label 标签名(二级标签child).
+ * @apiParam {String} label 文章分类(一级标签).
+ * @apiParam {String} child 标签名(二级标签child).
  *
  * @apiSuccess {String} firstname Firstname of the User.
  * @apiSuccess {String} lastname  Lastname of the User.
  */
 
 router.put("/UpdateArticleAPI", (req, res) => {
-  let { aid, title, content, type, label } = req.body;
-  if (aid && title && content && type && label) {
+  let { aid, title, content, label, child } = req.body;
+  if (aid && title && content && label && child) {
     let time = new Date().getTime();
     Article.updateOne(
       { _id: aid },
-      { title, content, type, label, publish_time: time }
+      { title, content, label, child, publish_time: time }
     )
       .then(() => {
         res.send({ err: null, msg: "修改成功" });
@@ -114,7 +114,7 @@ router.delete("/DeleteArticleAPI", (req, res) => {
  */
 
 router.get("/ArticleListAPI", (req, res) => {
-  let { uid, type, label } = req.query;
+  let { uid, label, child } = req.query;
   if (uid) {
     // 根据用户查
     Article.find({ uid })
@@ -126,9 +126,9 @@ router.get("/ArticleListAPI", (req, res) => {
       .catch((err) => {
         res.send({ err: null, msg: err });
       });
-  } else if (type) {
+  } else if (label) {
     // 根据所选标签查
-    Article.find({ type })
+    Article.find({ label })
       .then((data) => {
         data.length > 0
           ? res.send({ err: null, data })
@@ -137,8 +137,8 @@ router.get("/ArticleListAPI", (req, res) => {
       .catch((err) => {
         res.send({ err: null, msg: err });
       });
-  } else if (type && label) {
-    Article.find({ $and: [{ type }, { label }] })
+  } else if (label && child) {
+    Article.find({ $and: [{ label }, { child }] })
       .then((data) => {
         data.length > 0
           ? res.send({ err: null, data })

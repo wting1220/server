@@ -12,11 +12,11 @@ app.use(cors())
 
 // 引入路由
 const userRouter = require('./router/user/userRouter')
-app.use(userRouter)
+app.use('/api', userRouter)
 const tagsRouter = require('./router/tags/tagsRouter')
-app.use(tagsRouter)
+app.use('/api', tagsRouter)
 const articleRouter = require('./router/article/articleRouter')
-app.use(articleRouter)
+app.use('/api', articleRouter)
 // const fileRouter = require('./router/fileRouter')
 // app.use('/file', fileRouter)
 

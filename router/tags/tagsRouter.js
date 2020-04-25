@@ -10,8 +10,8 @@ const Tags = require("./model");
  * @apiParam {String} label 标签名.
  * @apiParam {Array} child 标签二级.
  *
- * @apiSuccess {String} firstname Firstname of the User.
- * @apiSuccess {String} lastname  Lastname of the User.
+ * @apiSuccess {String} err null.
+ * @apiSuccess {String} msg 添加成功.
  */
 
 router.post("/AddTagsAPI", (req, res) => {
@@ -45,13 +45,13 @@ router.post("/AddTagsAPI", (req, res) => {
  * @apiParam {String} label 标签名.
  * @apiParam {Array} child 标签二级.
  *
- * @apiSuccess {String} firstname Firstname of the User.
- * @apiSuccess {String} lastname  Lastname of the User.
+ * @apiSuccess {String} err null.
+ * @apiSuccess {String} msg 修改成功.
  */
 
 router.put("/UpdateTagsAPI", (req, res) => {
   let { tid, label, child } = req.body;
-  if (label) {
+  if (tid && (label || child)) {
     Tags.updateOne({ _id: tid }, { label, child })
       .then(() => {
         res.send({ err: null, msg: "修改成功" });
@@ -71,8 +71,8 @@ router.put("/UpdateTagsAPI", (req, res) => {
  *
  * @apiParam {String} ids 要删除标签的id数组.
  *
- * @apiSuccess {String} firstname Firstname of the User.
- * @apiSuccess {String} lastname  Lastname of the User.
+ * @apiSuccess {String} err null.
+ * @apiSuccess {String} msg 删除成功.
  */
 
 router.delete("/DeleteTagsAPI", (req, res) => {
@@ -95,8 +95,8 @@ router.delete("/DeleteTagsAPI", (req, res) => {
  * @apiName 标签整个list查询
  * @apiGroup Tags
  *
- * @apiSuccess {String} firstname Firstname of the User.
- * @apiSuccess {String} lastname  Lastname of the User.
+ * @apiSuccess {String} err null.
+ * @apiSuccess {String} data [{label: '', child: []}].
  */
 
 router.get("/TagsListAPI", (req, res) => {
