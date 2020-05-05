@@ -124,7 +124,7 @@ router.get("/TagsDetailAPI", (req, res) => {
   let { tid } = req.body;
   Tags.find({ _id: tid })
     .then((data) => {
-      res.send({ err: null, data });
+      res.send({ err: null, data: data[0] });
     })
     .catch((err) => {
       res.send({ err: null, msg: err });

@@ -12,6 +12,11 @@ const schema = new Schema({
   company: { type: String, default: null },
   selfIntroduction: { type: String, default: null },
   homepage: { type: String, default: null },
+  attention: {
+    lists: { type: Array, default: [] },
+    count: { type: Number },
+  },
+  level: { type:String, default: 'Lv1'},
   last_login_time: { type: Number, default: null },
 });
 // 将 scheme 对象转换为数据模型

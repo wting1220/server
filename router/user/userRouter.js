@@ -6,35 +6,26 @@ const jwt = require("../../utils/token");
 
 let codes = {};
 
-/**
- * @api {get} /GetRepeatUser 用户名或邮箱在数据库中已存在
- * @apiName 用户注册
- * @apiGroup User
- *
- * @apiParam {String} username 用户名.
- * @apiParam {String} mail 邮箱.
- *
- * @apiSuccess {String} err null.
- * @apiSuccess {String} msg  '用户已存在'.
- */
+function GetRepeatUser(username, mail) {
+  return new Promise((resolve, reject) => {
+    if (username || mail) {
+      User.find({ $or: [{ username }, { mail }] })
+        .then(data => {
+          if (data.length > 0) {
+            resolve({ err: 'error', msg: "用户已存在" });
+          } else { 
+            resolve({ err: null, msg: "" });
+          }
+        })
+        .catch((err) => {
+          resolve({ err: "error", msg: err });
+        });
+    } else {
+      resolve({ err: "error", msg: '请校验必填项' });
+    }
+  })
+}
 
-router.get("/GetRepeatUserAPI", (req, res) => {
-  // 获取数据
-  let { username, mail } = req.query;
-  if (username || mail) {
-    User.find({ $or: [{ username }, { mail }] })
-      .then((data) => {
-        if (data.length > 0) {
-          res.send({ err: null, msg: "用户已存在" });
-        }
-      })
-      .catch((err) => {
-        res.send({ err: "error", msg: err });
-      });
-  } else {
-      res.send({ err: "error", msg: '请校验必填项' });
-  }
-});
 
 /**
  * @api {post} /regist 用户注册
@@ -58,13 +49,19 @@ router.post("/regist", (req, res) => {
   let { username, password, mail, code } = req.body;
   if (username && password && mail && code) {
     if (codes[mail] === +code) {
-      User.insertMany({ username, password, mail })
-        .then(() => {
-          res.send({ err: null, msg: "注册成功" });
-        })
-        .catch((err) => {
-          res.send({ err: "error", msg: err });
-        });
+      GetRepeatUser(username).then(data => {
+        if (data.err === null) {
+          User.insertMany({ username, password, mail })
+            .then(() => {
+              res.send({ err: null, msg: "注册成功" });
+            })
+            .catch((err) => {
+              res.send({ err: "error", msg: err });
+            });
+        } else {
+          res.send(data)
+        }
+      })
     } else {
       return res.send({ err: "error", msg: "验证码错误" });
     }
@@ -93,18 +90,18 @@ router.post("/login", (req, res) => {
       .then((data) => {
         data.length > 0
           ? User.find({ password }).then((data) => {
-              if (data.length > 0) {
-                let token = jwt.createToken({ id: data[0]._id, img: data[0].img, last_login_time: data[0].last_login_time });
-                let time = new Date().getTime();
-                User.updateOne({ username }, { last_login_time: time }).then(
-                  () => {
-                    res.send({ err: null, msg: "登陆成功", token });
-                  }
-                );
-              } else {
-                res.send({ err: "error", msg: "密码错误" });
-              }
-            })
+            if (data.length > 0) {
+              let token = jwt.createToken({ id: data[0]._id, img: data[0].img, last_login_time: data[0].last_login_time });
+              let time = new Date().getTime();
+              User.updateOne({ username }, { last_login_time: time }).then(
+                () => {
+                  res.send({ err: null, msg: "登陆成功", token });
+                }
+              );
+            } else {
+              res.send({ err: "error", msg: "密码错误" });
+            }
+          })
           : res.send({ err: "error", msg: "用户名不存在" });
       })
       .catch((err) => {
@@ -207,16 +204,22 @@ router.put("/UpdateUserAPI", (req, res) => {
       });
     } else {
       // 修改用户信息
-      User.updateOne(
-        { _id: uid },
-        { img, username, position, company, selfIntroduction, homepage }
-      )
-        .then(() => {
-          res.send({ err: null, msg: "修改成功" });
-        })
-        .catch(() => {
-          res.send({ err: "error", msg: "修改失败" });
-        });
+      GetRepeatUser(username).then(data => {
+        if (data.err === null) {
+          User.updateOne(
+            { _id: uid },
+            { img, username, position, company, selfIntroduction, homepage }
+          )
+            .then(() => {
+              res.send({ err: null, msg: "修改成功" });
+            })
+            .catch(() => {
+              res.send({ err: "error", msg: "修改失败" });
+            });
+        } else {
+          res.send(data);
+        }
+      })
     }
   } else {
     res.send({ err: "error", msg: "请校验必填项" });
@@ -297,5 +300,18 @@ router.get("/UserInfoAPI", (req, res) => {
     res.send({ err: "error", msg: "请校验必填项" });
   }
 });
+
+// 关注用户
+router.post('/AttentionUserAPI', (req, res) => { 
+  let { uid, attentionID } = req.body
+  User.findOne({ _id: attentionID }).then(data => { 
+    User.updateOne({ _id: attentionID }, { attention: { lists: data.attention.lists.concat(uid) }}).then(() => { 
+      res.send({err: null, msg: '关注成功'})
+    }).catch(err => { 
+      res.send({err: 'error', msg: err})
+    })
+  })
+})
+
 
 module.exports = router;
